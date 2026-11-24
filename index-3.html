@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KulturLegi Check</title>
+<meta name="description" content="Kurz prüfen, ob Sie Anspruch auf eine KulturLegi haben. Drei Fragen, sofortiges Ergebnis.">
+<meta property="og:title" content="Bekomme ich eine KulturLegi?">
+<meta property="og:description" content="Drei kurze Fragen. Sie sehen sofort, ob sich ein Antrag lohnt.">
+<meta property="og:image" content="https://kulturlegicheck.vercel.app/og.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#c8102e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23c8102e'/%3E%3Cpath d='M18 33l9 9 19-20' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* Eine Spalte, grosse Schrift, grosse Tasten. Farben: Caritas-Rot als Akzent (Wert ggf. vom Flyer übernehmen). */
+:root {
+  --bg: #f6f4f2;
+  --surface: #ffffff;
+  --fg: #1d1b1a;
+  --muted: #5b5552;
+  --line: #ddd6d2;
+  --accent: #c8102e;
+  --accent-fg: #ffffff;
+  --accent-soft: #fbe9ec;
+  --yes-bg: #e6f4ec; --yes-line: #2e8b57;
+  --no-bg: #eef0f3; --no-line: #66717f;
+  --info-bg: #fdf3dc; --info-line: #b0821a;
+  --focus: #0b57d0;
+  --font: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161414; --surface: #211e1d; --fg: #f1eceb; --muted: #b7aeab; --line: #3d3735;
+    --accent: #ff5a6e; --accent-fg: #1a0c0e; --accent-soft: #3a1b20;
+    --yes-bg: #173326; --yes-line: #5cc08a;
+    --no-bg: #252a31; --no-line: #95a3b5;
+    --info-bg: #3a3014; --info-line: #dcb455;
+    --focus: #8ab4f8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161414; --surface: #211e1d; --fg: #f1eceb; --muted: #b7aeab; --line: #3d3735;
+  --accent: #ff5a6e; --accent-fg: #1a0c0e; --accent-soft: #3a1b20;
+  --yes-bg: #173326; --yes-line: #5cc08a;
+  --no-bg: #252a31; --no-line: #95a3b5;
+  --info-bg: #3a3014; --info-line: #dcb455;
+  --focus: #8ab4f8;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font); font-size: 1.125rem; line-height: 1.5;
+}
+.topbar { background: var(--accent); height: 6px; }
+.wrap {
+  max-width: 36rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem;
+  padding: 1.5rem max(16px, env(safe-area-inset-right, 0px)) 3rem max(16px, env(safe-area-inset-left, 0px));
+}
+.brand { display: flex; align-items: center; gap: .75rem; min-height: 2.5rem; }
+.brand img { height: 2.5rem; width: auto; display: block; }
+.brand .wordmark { font-weight: 700; font-size: 1.15rem; letter-spacing: -.01em; }
+.brand .wordmark b { color: var(--accent); }
+h1 { font-weight: 700; font-size: clamp(1.75rem, 7vw, 2.3rem); line-height: 1.15; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.lead { color: var(--muted); margin: .5rem 0 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem; display: flex; flex-direction: column; gap: .9rem; }
+.q { font-weight: 600; font-size: 1.15rem; margin: 0; }
+.step { display: inline-flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-size: .95rem; font-weight: 700; margin-right: .5rem; vertical-align: .1em; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+legend { padding: 0; margin-bottom: .6rem; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.opts.kids { grid-template-columns: repeat(6, 1fr); }
+.opt { position: relative; }
+.opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.opt span {
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  min-height: 3.4rem; padding: .5rem .6rem; border: 2px solid var(--line); border-radius: 10px;
+  background: var(--surface); font-weight: 500; cursor: pointer; line-height: 1.25;
+}
+.opt input:checked + span { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.opt input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+label.field { display: flex; flex-direction: column; gap: .35rem; font-weight: 600; }
+.chf { position: relative; }
+.chf span { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 500; pointer-events: none; }
+input[type="text"], select {
+  font: inherit; color: var(--fg); background: var(--bg);
+  border: 2px solid var(--line); border-radius: 10px; padding: .7rem .8rem; width: 100%; min-height: 3.2rem;
+}
+.chf input { padding-left: 3.7rem; font-variant-numeric: tabular-nums; font-size: 1.25rem; }
+.hint { font-size: .95rem; color: var(--muted); font-weight: 400; margin: 0; }
+select { font-weight: 400; }
+details.mini { display: flex; flex-direction: column; }
+details.mini[open] summary { margin-bottom: .2rem; }
+details.mini select { margin-top: .6rem; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+details.mini summary { font-size: .95rem; color: var(--accent); font-weight: 600; cursor: pointer; }
+details.mini p { font-size: .95rem; color: var(--muted); margin: .5rem 0 0; }
+button {
+  font: inherit; font-weight: 700; font-size: 1.2rem; background: var(--accent); color: var(--accent-fg);
+  border: 0; border-radius: 12px; padding: 1rem 1.2rem; min-height: 3.6rem; cursor: pointer; width: 100%;
+}
+button:hover { filter: brightness(1.07); }
+.result { border: 2px solid var(--line); border-radius: 14px; padding: 1.2rem; display: flex; flex-direction: column; gap: .6rem; background: var(--surface); }
+.result:focus { outline: none; }
+.result[data-state="yes"] { background: var(--yes-bg); border-color: var(--yes-line); }
+.result[data-state="no"] { background: var(--no-bg); border-color: var(--no-line); }
+.result[data-state="info"] { background: var(--info-bg); border-color: var(--info-line); }
+.status { display: flex; align-items: flex-start; gap: .75rem; }
+.status .icon { flex: none; width: 2.2rem; height: 2.2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; margin-top: .1rem; }
+.result[data-state="yes"] .icon { background: var(--yes-line); }
+.result[data-state="no"] .icon { background: var(--no-line); }
+.result[data-state="info"] .icon { background: var(--info-line); }
+.icon svg { width: 1.2rem; height: 1.2rem; }
+.cta { display: flex; align-items: center; justify-content: center; min-height: 3.2rem; padding: .7rem 1rem; border-radius: 12px; background: var(--accent); color: var(--accent-fg) !important; text-decoration: none; font-weight: 700; }
+.cta:hover { filter: brightness(1.07); }
+.result h2 { font-size: clamp(1.25rem, 5vw, 1.45rem); line-height: 1.25; margin: 0; text-wrap: balance; }
+.result p { margin: 0; }
+.small { font-size: .95rem; color: var(--muted); }
+.next { display: flex; flex-direction: column; gap: .6rem; padding-top: .9rem; margin-top: .2rem; border-top: 1px solid var(--line); }
+.next .small a { color: inherit; }
+.next a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
+details.calc { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: .9rem 1.1rem; }
+details.calc summary { cursor: pointer; font-weight: 600; }
+.tablewrap { overflow-x: auto; margin-top: .7rem; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td:last-child, th:last-child { text-align: right; }
+footer { font-size: .85rem; color: var(--muted); display: flex; flex-direction: column; gap: .4rem; }
+footer p { margin: 0; }
+[hidden] { display: none !important; }
+@media (max-width: 380px) { .opts.kids { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+  <div class="brand">
+    <!-- ANPASSEN: Logo als logo.png neben index.html legen, dann erscheint es hier. -->
+    <img src="logo.png" alt="KulturLegi Zentralschweiz" onerror="this.remove(); document.getElementById('wordmark').hidden=false;">
+    <span class="wordmark" id="wordmark" hidden><b>KulturLegi</b> Zentralschweiz</span>
+  </div>
+
+  <header>
+    <h1>Bekomme ich eine KulturLegi?</h1>
+    <p class="lead">Drei kurze Fragen. Sie sehen sofort, ob sich ein Antrag lohnt.</p>
+  </header>
+
+  <form id="form" novalidate>
+    <div style="display:flex;flex-direction:column;gap:1.25rem">
+      <div class="card">
+        <fieldset>
+          <legend class="q"><span class="step">1</span>Wie wohnen Sie?</legend>
+          <div class="opts">
+            <label class="opt"><input type="radio" name="haushalt" value="einzel"><span>Allein</span></label>
+            <label class="opt"><input type="radio" name="haushalt" value="paar"><span>Als Paar</span></label>
+            <label class="opt"><input type="radio" name="haushalt" value="familie"><span>Paar mit Kindern</span></label>
+            <label class="opt"><input type="radio" name="haushalt" value="allein"><span>Allein&shy;erziehend</span></label>
+          </div>
+        </fieldset>
+        <fieldset id="kinderfeld" hidden>
+          <legend class="q" style="font-size:1rem">Wie viele Kinder?</legend>
+          <div class="opts kids">
+            <label class="opt"><input type="radio" name="kinder" value="1"><span>1</span></label>
+            <label class="opt"><input type="radio" name="kinder" value="2"><span>2</span></label>
+            <label class="opt"><input type="radio" name="kinder" value="3"><span>3</span></label>
+            <label class="opt"><input type="radio" name="kinder" value="4"><span>4</span></label>
+            <label class="opt"><input type="radio" name="kinder" value="5"><span>5</span></label>
+            <label class="opt"><input type="radio" name="kinder" value="6"><span>6+</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="card">
+        <label class="field" for="einkommen"><span><span class="step">2</span>Einkommen pro Jahr</span>
+          <div class="chf"><span>CHF</span><input type="text" id="einkommen" inputmode="numeric" autocomplete="off" placeholder="z. B. 38'000"></div>
+          <span class="hint" id="hint-einkommen">Ganzer Haushalt, «Total der Einkünfte» auf der letzten Steuerveranlagung.</span>
+        </label>
+        <details class="mini">
+          <summary>Mein Einkommen hat sich verändert</summary>
+          <p>Geben Sie das aktuelle Jahreseinkommen ein: Nettolohn mal 12 (bei 13. Monatslohn mal 13). Bezahlte Alimente zuerst abziehen.</p>
+        </details>
+      </div>
+
+      <div class="card">
+        <label class="field" for="vermoegen"><span><span class="step">3</span>Vermögen</span>
+          <div class="chf"><span>CHF</span><input type="text" id="vermoegen" inputmode="numeric" autocomplete="off" placeholder="z. B. 5'000"></div>
+          <span class="hint" id="hint-vermoegen">Laut letzter Steuerveranlagung. Kein Vermögen: 0.</span>
+        </label>
+        <details class="mini">
+          <summary>Wo finde ich die Zahlen?</summary>
+          <p>Beide Zahlen stehen auf Ihrer letzten Steuerveranlagung. Wählen Sie Ihren Kanton, dann zeigen wir die genaue Zeile.</p>
+          <select id="kanton" aria-label="Kanton">
+            <option value="">Kanton wählen</option>
+            <option value="LU">Luzern</option><option value="NW">Nidwalden</option><option value="OW">Obwalden</option>
+            <option value="SZ">Schwyz</option><option value="UR">Uri</option><option value="ZG">Zug</option>
+          </select>
+        </details>
+      </div>
+    </div>
+    <div style="margin-top:1.25rem"><button type="submit">Jetzt prüfen</button></div>
+  </form>
+
+  <section id="result" class="result" aria-live="polite" tabindex="-1" hidden></section>
+
+  <details class="calc">
+    <summary>So wird gerechnet</summary>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Haushalt</th><th>Einkommen bis</th></tr></thead>
+        <tbody id="limits-body"></tbody>
+      </table>
+    </div>
+    <p class="small">Vermögen bis CHF 37'500 (Einzelpersonen, Alleinerziehende) oder CHF 60'000 (Paare, Familien).</p>
+  </details>
+
+  <footer>
+    <p>Unverbindliche Einschätzung. Ihre Angaben bleiben auf Ihrem Gerät und werden nicht gespeichert. Die Seite zählt nur anonym die Besuche, ohne Cookies.</p>
+  </footer>
+</div>
+
+<script>
+/* ===== ANPASSEN: Alle Werte, die die Caritas ändern kann, stehen hier. ===== */
+var CONTACT = {
+  antragLink: "https://www.kulturlegi.ch/zentralschweiz/kulturlegi-beantragen/wer-ist-berechtigt",
+  antragText: "KulturLegi beantragen",
+  telefon: "041 368 52 22",
+  email: "zentralschweiz@kulturlegi.ch"
+};
+/* Einkommensgrenzen pro Jahr (CHF), Quelle: Berechnung und Obergrenze */
+var LIMITS = {
+  einzel: 42500,
+  paar: 60500,
+  familie: { 1: 71500, 2: 81000, 3: 87000, 4: 92500, 5: 97000 },
+  allein:  { 1: 54500, 2: 64000, 3: 72500, 4: 77000, 5: 82500 }
+};
+/* Vermögensgrenzen: Alleinerziehende und Familien sind angenommen, bitte bestätigen */
+var ASSET_LIMITS = { einzel: 37500, allein: 37500, paar: 60000, familie: 60000 };
+/* ===== Ende ANPASSEN (Ziffern der Steuerveranlagung siehe unten) ===== */
+var ZIFFERN = {
+  LU: { e: "Ziffer 199", v: "Ziffer 450" },
+  NW: { e: "Ziffer 199", v: "Ziffer 450" },
+  OW: { e: "Ziffer 199", v: "Ziffer 450" },
+  SZ: { e: "Ziffer 310 bzw. 360", v: "Ziffer 960" },
+  UR: { e: "Ziffer 18 bzw. 199", v: "Ziffer 29 bzw. 470" },
+  ZG: { e: "Hauptveranlagung Direkte Bundessteuer", v: "Ziffer 33 bzw. Code 630" }
+};
+function chf(n) { return "CHF " + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'"); }
+function parseChf(s) { var t = String(s || "").replace(/[^0-9]/g, ""); return t === "" ? null : parseInt(t, 10); }
+function incomeLimit(h, k) { return h === "einzel" ? LIMITS.einzel : h === "paar" ? LIMITS.paar : LIMITS[h][k]; }
+function check(inp) {
+  if (!inp.haushalt) return { state: "missing", text: "Bitte wählen Sie, wie Sie wohnen." };
+  var needsKids = inp.haushalt === "familie" || inp.haushalt === "allein";
+  if (needsKids && !inp.kinder) return { state: "missing", text: "Bitte wählen Sie die Zahl der Kinder." };
+  if (needsKids && inp.kinder === 6) return { state: "info", kind: "kinder" };
+  if (inp.einkommen === null) return { state: "missing", text: "Bitte geben Sie Ihr Einkommen ein." };
+  if (inp.vermoegen === null) return { state: "missing", text: "Bitte geben Sie Ihr Vermögen ein (kein Vermögen: 0)." };
+  var li = incomeLimit(inp.haushalt, inp.kinder), lv = ASSET_LIMITS[inp.haushalt];
+  var okE = inp.einkommen <= li, okV = inp.vermoegen <= lv;
+  return { state: okE && okV ? "yes" : "no", kind: "rechnung", okE: okE, okV: okV, li: li, lv: lv,
+    einkommen: inp.einkommen, vermoegen: inp.vermoegen,
+    nahe: okE && okV && (inp.einkommen > li * 0.95 || inp.vermoegen > lv * 0.95) };
+}
+
+var $ = function (id) { return document.getElementById(id); };
+var submitted = false;
+function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
+function radio(name) { var c = document.querySelector('input[name="' + name + '"]:checked'); return c ? c.value : ""; }
+
+function nextSteps() {
+  var d = el("div", "next");
+  var a = el("a", "cta", CONTACT.antragText);
+  a.href = CONTACT.antragLink;
+  a.target = "_blank"; a.rel = "noopener";
+  d.appendChild(a);
+  var q = el("p", "small", "Fragen? ");
+  var tel = el("a", null, CONTACT.telefon); tel.href = "tel:" + CONTACT.telefon.replace(/\s/g, "");
+  var mail = el("a", null, CONTACT.email); mail.href = "mailto:" + CONTACT.email;
+  q.appendChild(tel); q.appendChild(document.createTextNode(" oder ")); q.appendChild(mail);
+  d.appendChild(q);
+  return d;
+}
+
+var ICONS = {
+  yes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  no: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 12h12"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 7v6M12 17.5v.01"/></svg>'
+};
+function heading(state, text) {
+  var d = el("div", "status"), i = el("span", "icon");
+  i.setAttribute("aria-hidden", "true"); i.innerHTML = ICONS[state];
+  d.appendChild(i); d.appendChild(el("h2", null, text)); return d;
+}
+function render(r) {
+  var box = $("result");
+  box.innerHTML = ""; box.hidden = false;
+  box.setAttribute("data-state", r.state === "missing" ? "info" : r.state);
+  if (r.state === "missing") {
+    box.appendChild(heading("info", "Es fehlt noch eine Angabe"));
+    box.appendChild(el("p", null, r.text));
+    return;
+  }
+  if (r.kind === "kinder") {
+    box.appendChild(heading("info", "Bitte melden Sie sich bei der KulturLegi"));
+    box.appendChild(el("p", null, "Für Haushalte mit mehr als fünf Kindern wird Ihr Fall persönlich geprüft."));
+  } else if (r.state === "yes") {
+    box.appendChild(heading("yes", "Ja, Sie können die KulturLegi voraussichtlich beziehen."));
+    box.appendChild(el("p", null, r.nahe
+      ? "Sie liegen knapp unter der Grenze. Stellen Sie den Antrag trotzdem, er wird genau geprüft."
+      : "Einkommen und Vermögen liegen unter den Grenzen."));
+  } else {
+    box.appendChild(heading("no", "Voraussichtlich leider nicht."));
+    var why = !r.okE && !r.okV ? "Einkommen und Vermögen liegen" : !r.okE ? "Ihr Einkommen liegt" : "Ihr Vermögen liegt";
+    var lim = !r.okE && !r.okV ? "" : !r.okE ? " (" + chf(r.li) + ")" : " (" + chf(r.lv) + ")";
+    box.appendChild(el("p", null, why + " über der Grenze" + lim + "."));
+    box.appendChild(el("p", "small", "Ist Ihr Einkommen seit der letzten Steuerveranlagung gesunken? Dann rechnen Sie mit dem aktuellen Einkommen."));
+  }
+  box.appendChild(nextSteps());
+}
+
+function readInput() {
+  var k = radio("kinder");
+  return { haushalt: radio("haushalt"), kinder: k ? parseInt(k, 10) : null,
+    einkommen: parseChf($("einkommen").value), vermoegen: parseChf($("vermoegen").value) };
+}
+
+function update(show) {
+  var hh = radio("haushalt");
+  $("kinderfeld").hidden = !(hh === "familie" || hh === "allein");
+  var z = ZIFFERN[$("kanton").value];
+  $("hint-einkommen").textContent = "Ganzer Haushalt, «Total der Einkünfte» auf der letzten Steuerveranlagung" + (z ? " (" + z.e + ")." : ".");
+  $("hint-vermoegen").textContent = "Laut letzter Steuerveranlagung" + (z ? " (" + z.v + ")" : "") + ". Kein Vermögen: 0.";
+  if (show || submitted) render(check(readInput()));
+}
+
+function fmtField(e) { var n = parseChf(e.target.value); e.target.value = n === null ? "" : n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'"); }
+
+document.addEventListener("DOMContentLoaded", function () {
+  var tb = $("limits-body");
+  function row(a, b) { var tr = document.createElement("tr"); [a, b].forEach(function (t) { var td = document.createElement("td"); td.textContent = t; tr.appendChild(td); }); tb.appendChild(tr); }
+  row("Allein", chf(LIMITS.einzel));
+  row("Paar", chf(LIMITS.paar));
+  [1, 2, 3, 4, 5].forEach(function (n) { row("Paar mit " + n + (n === 1 ? " Kind" : " Kindern"), chf(LIMITS.familie[n])); });
+  [1, 2, 3, 4, 5].forEach(function (n) { row("Alleinerziehend, " + n + (n === 1 ? " Kind" : " Kinder"), chf(LIMITS.allein[n])); });
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault(); submitted = true; update(true);
+    $("result").focus({ preventScroll: true });
+    $("result").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  document.querySelectorAll('input[type="radio"]').forEach(function (r) { r.addEventListener("change", function () { update(false); }); });
+  $("kanton").addEventListener("change", function () { update(false); });
+  ["einkommen", "vermoegen"].forEach(function (id) {
+    $(id).addEventListener("input", function () { if (submitted) update(false); });
+    $(id).addEventListener("blur", fmtField);
+  });
+  update(false);
+});
+</script>
+<!-- Besuchszählung (Vercel Web Analytics, ohne Cookies). Funktioniert, sobald sie in Vercel eingeschaltet ist. -->
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
