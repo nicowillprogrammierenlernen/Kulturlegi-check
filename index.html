@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KulturLegi Berechtigungsprüfung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: eine schmale Spalte, ein Schritt nach dem anderen, grosses Resultat unten. Für ältere Personen: grosse Schrift, hoher Kontrast, keine Spielereien. */
+:root {
+  --bg: #f4f6f4;
+  --surface: #ffffff;
+  --fg: #19231f;
+  --muted: #4c5a54;
+  --line: #c9d3ce;
+  --accent: #0a6b5d;
+  --accent-fg: #ffffff;
+  --yes-bg: #e3f3ea;
+  --yes-line: #2f8a5c;
+  --no-bg: #e9eef5;
+  --no-line: #4f6f96;
+  --info-bg: #fbf1d9;
+  --info-line: #a67c12;
+  --focus: #0b57d0;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-head: "Space Grotesk", "Inter", system-ui, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111916; --surface: #1a2420; --fg: #eaf1ed; --muted: #aebbb4; --line: #38463f;
+    --accent: #5cc7b2; --accent-fg: #0a1411;
+    --yes-bg: #17352a; --yes-line: #55b983;
+    --no-bg: #1b2736; --no-line: #84a6cf;
+    --info-bg: #3a3013; --info-line: #d9b24c;
+    --focus: #8ab4f8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111916; --surface: #1a2420; --fg: #eaf1ed; --muted: #aebbb4; --line: #38463f;
+  --accent: #5cc7b2; --accent-fg: #0a1411;
+  --yes-bg: #17352a; --yes-line: #55b983;
+  --no-bg: #1b2736; --no-line: #84a6cf;
+  --info-bg: #3a3013; --info-line: #d9b24c;
+  --focus: #8ab4f8;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 1.125rem; line-height: 1.55;
+  padding-block: 1.5rem 3rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 40rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.proto { font-size: .875rem; color: var(--muted); border: 1px dashed var(--line); border-radius: 8px; padding: .6rem .8rem; }
+h1 { font-family: var(--font-head); font-weight: 600; font-size: clamp(1.7rem, 6vw, 2.3rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-head); font-weight: 600; font-size: 1.3rem; margin: 0 0 .25rem; }
+.lead { color: var(--muted); margin: .5rem 0 0; }
+form { display: flex; flex-direction: column; gap: 1.25rem; }
+fieldset { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 1rem 1rem 1.1rem; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: .7rem; }
+legend { font-family: var(--font-head); font-weight: 600; font-size: 1.2rem; padding: 0 .4rem; }
+.hint { font-size: .95rem; color: var(--muted); margin: 0; }
+.choice { display: flex; gap: .7rem; align-items: flex-start; padding: .55rem .6rem; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
+.choice:hover { background: var(--bg); }
+.choice input { width: 1.4rem; height: 1.4rem; margin: .15rem 0 0; accent-color: var(--accent); flex: none; }
+label.field { display: flex; flex-direction: column; gap: .3rem; font-weight: 500; }
+input[type="text"], select {
+  font: inherit; color: var(--fg); background: var(--bg);
+  border: 2px solid var(--line); border-radius: 8px; padding: .65rem .75rem; width: 100%; min-height: 3rem;
+}
+select { appearance: auto; }
+.chf { position: relative; }
+.chf span { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 500; pointer-events: none; }
+.chf input { padding-left: 3.1rem; font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button {
+  font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-fg);
+  border: 0; border-radius: 10px; padding: .9rem 1.2rem; min-height: 3.2rem; cursor: pointer;
+}
+button:hover { filter: brightness(1.08); }
+.result { border: 2px solid var(--line); border-radius: 12px; padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: .6rem; background: var(--surface); }
+.result[data-state="yes"] { background: var(--yes-bg); border-color: var(--yes-line); }
+.result[data-state="no"] { background: var(--no-bg); border-color: var(--no-line); }
+.result[data-state="info"] { background: var(--info-bg); border-color: var(--info-line); }
+.result h2 { font-size: 1.5rem; line-height: 1.25; margin: 0; text-wrap: balance; }
+.result p { margin: 0; }
+.result ul { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .3rem; }
+.small { font-size: .95rem; color: var(--muted); }
+.next { display: flex; flex-direction: column; gap: .5rem; padding-top: .4rem; border-top: 1px solid var(--line); }
+.next a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
+details { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: .8rem 1rem; }
+summary { cursor: pointer; font-weight: 600; }
+.tablewrap { overflow-x: auto; margin-top: .8rem; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 600; }
+footer { font-size: .9rem; color: var(--muted); }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: no-preference) { .result { transition: background .2s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="proto">Prototyp eines Studierendenprojekts (HSG) zur KulturLegi Zentralschweiz. Kein offizielles Angebot der Caritas. Ihre Angaben bleiben auf Ihrem Gerät und werden nirgends gespeichert oder gesendet.</p>
+
+  <header>
+    <h1>Haben Sie Anspruch auf die KulturLegi?</h1>
+    <p class="lead">Diese Prüfung ist für Personen, die zum Beispiel Prämienverbilligung erhalten oder knapp über dem Existenzminimum leben. Beantworten Sie ein paar Fragen und sehen Sie sofort, ob sich ein Antrag lohnt.</p>
+  </header>
+
+  <form id="form" novalidate>
+    <div id="calc" style="display:flex;flex-direction:column;gap:1.25rem">
+      <fieldset>
+        <legend>1. Ihr Haushalt</legend>
+        <label class="field" for="haushalt">Wie wohnen Sie?
+          <select id="haushalt">
+            <option value="">Bitte wählen</option>
+            <option value="einzel">Allein, ohne Kinder</option>
+            <option value="paar">Als Paar, ohne Kinder</option>
+            <option value="familie">Als Paar mit Kindern</option>
+            <option value="allein">Alleinerziehend, mit Kindern</option>
+          </select>
+        </label>
+        <label class="field" for="kinder" id="kinderfeld" hidden>Wie viele Kinder leben im Haushalt?
+          <select id="kinder">
+            <option value="">Bitte wählen</option>
+            <option value="1">1 Kind</option><option value="2">2 Kinder</option><option value="3">3 Kinder</option>
+            <option value="4">4 Kinder</option><option value="5">5 Kinder</option><option value="6">Mehr als 5 Kinder</option>
+          </select>
+        </label>
+        <label class="field" for="kanton">In welchem Kanton wohnen Sie?
+          <select id="kanton">
+            <option value="">Bitte wählen</option>
+            <option value="LU">Luzern</option><option value="NW">Nidwalden</option><option value="OW">Obwalden</option>
+            <option value="SZ">Schwyz</option><option value="UR">Uri</option><option value="ZG">Zug</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>2. Einkommen und Vermögen</legend>
+        <p class="hint">Alle Zahlen finden Sie in Ihrer letzten Steuerveranlagung.</p>
+        <label class="field" for="einkommen">Haushaltseinkommen pro Jahr
+          <div class="chf"><span>CHF</span><input type="text" id="einkommen" inputmode="numeric" autocomplete="off" placeholder="z. B. 38'000"></div>
+          <span class="hint" id="hint-einkommen">Total der Einkünfte der letzten Steuerveranlagung, inklusive Kinderzulagen und Alimente.</span>
+        </label>
+        <label class="field" for="vermoegen">Vermögen
+          <div class="chf"><span>CHF</span><input type="text" id="vermoegen" inputmode="numeric" autocomplete="off" placeholder="z. B. 5'000, oder 0"></div>
+          <span class="hint" id="hint-vermoegen">Betrag der letzten Steuerveranlagung. Haben Sie kein Vermögen, schreiben Sie 0.</span>
+        </label>
+        <p class="hint">Hat sich Ihr Einkommen oder Ihre Lebenssituation seit der letzten Steuerveranlagung verändert? Dann geben Sie Ihr aktuelles Jahreseinkommen ein. Rechnen Sie dafür den Nettolohn der Lohnabrechnung mal 12, bei 13 Monatslöhnen mal 13. Wenn Sie als alleinlebender Vater Alimente bezahlen, ziehen Sie diese zuerst ab.</p>
+      </fieldset>
+    </div>
+
+    <button type="submit">Berechtigung prüfen</button>
+  </form>
+
+  <section id="result" class="result" aria-live="polite" tabindex="-1" hidden></section>
+
+  <details>
+    <summary>So wird gerechnet</summary>
+    <p class="small">Die Grenzen stammen aus dem Berechnungsblatt «Berechnung und Obergrenze» der KulturLegi Zentralschweiz. Wer keinen direkten Berechtigungsgrund hat, darf die KulturLegi beziehen, wenn Haushaltseinkommen und Vermögen unter den Grenzen liegen.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Haushalt</th><th>Einkommen pro Jahr bis</th></tr></thead>
+        <tbody id="limits-body"></tbody>
+      </table>
+    </div>
+    <p class="small">Vermögen: bis CHF 37'500 für Einzelpersonen, bis CHF 60'000 für Paare. Für Alleinerziehende wird die Grenze für Einzelpersonen, für Familien die Grenze für Paare verwendet.</p>
+  </details>
+
+  <footer>
+    <p>Das Ergebnis ist eine Einschätzung und nicht verbindlich. Verbindlich prüft die KulturLegi Zentralschweiz Ihren Antrag. Quelle der Grenzen: KulturLegi Zentralschweiz (2023), Berechnung und Obergrenze, S. 1.</p>
+  </footer>
+</div>
+
+<script>
+// PURE START
+var LIMITS = {
+  einzel: 42500,
+  paar: 60500,
+  familie: { 1: 71500, 2: 81000, 3: 87000, 4: 92500, 5: 97000 },
+  allein:  { 1: 54500, 2: 64000, 3: 72500, 4: 77000, 5: 82500 }
+};
+var ASSET_LIMITS = { einzel: 37500, allein: 37500, paar: 60000, familie: 60000 };
+var ZIFFERN = {
+  LU: { e: "Ziffer 199", v: "Ziffer 450" },
+  NW: { e: "Ziffer 199", v: "Ziffer 450" },
+  OW: { e: "Ziffer 199", v: "Ziffer 450" },
+  SZ: { e: "Ziffer 310 bzw. 360", v: "Ziffer 960" },
+  UR: { e: "Ziffer 18 bzw. 199", v: "Ziffer 29 bzw. 470" },
+  ZG: { e: "Hauptveranlagung Direkte Bundessteuer", v: "Ziffer 33 bzw. Code 630" }
+};
+function chf(n) {
+  return "CHF " + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+}
+function parseChf(s) {
+  var t = String(s || "").replace(/[^0-9]/g, "");
+  return t === "" ? null : parseInt(t, 10);
+}
+function incomeLimit(haushalt, kinder) {
+  if (haushalt === "einzel") return LIMITS.einzel;
+  if (haushalt === "paar") return LIMITS.paar;
+  return LIMITS[haushalt][kinder];
+}
+// in: { gruende: [..], haushalt, kinder, einkommen, vermoegen }
+function check(inp) {
+  if (inp.gruende && inp.gruende.length) return { state: "yes", kind: "grund" };
+  if (!inp.haushalt) return { state: "missing", text: "Bitte wählen Sie Ihren Haushalt." };
+  var needsKids = inp.haushalt === "familie" || inp.haushalt === "allein";
+  if (needsKids && !inp.kinder) return { state: "missing", text: "Bitte wählen Sie die Zahl der Kinder." };
+  if (needsKids && inp.kinder === 6) return { state: "info", kind: "kinder" };
+  if (inp.einkommen === null || inp.einkommen === undefined) return { state: "missing", text: "Bitte geben Sie Ihr Haushaltseinkommen ein." };
+  if (inp.vermoegen === null || inp.vermoegen === undefined) return { state: "missing", text: "Bitte geben Sie Ihr Vermögen ein, bei keinem Vermögen 0." };
+  var li = incomeLimit(inp.haushalt, inp.kinder), lv = ASSET_LIMITS[inp.haushalt];
+  var okE = inp.einkommen <= li, okV = inp.vermoegen <= lv;
+  return {
+    state: okE && okV ? "yes" : "no", kind: "rechnung",
+    okE: okE, okV: okV, li: li, lv: lv, einkommen: inp.einkommen, vermoegen: inp.vermoegen,
+    nahe: okE && okV && (inp.einkommen > li * 0.95 || inp.vermoegen > lv * 0.95)
+  };
+}
+// PURE END
+
+var $ = function (id) { return document.getElementById(id); };
+var submitted = false;
+
+function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
+
+function nextSteps() {
+  var d = el("div", "next");
+  d.appendChild(el("p", "small", "So geht es weiter: Den Antrag finden Sie auf Ihrem Flyer oder online bei der KulturLegi Zentralschweiz."));
+  var a = el("a", null, "Zur Seite «Wer ist berechtigt?»");
+  a.href = "https://www.kulturlegi.ch/zentralschweiz/kulturlegi-beantragen/wer-ist-berechtigt";
+  a.target = "_blank"; a.rel = "noopener";
+  d.appendChild(a);
+  d.appendChild(el("p", "small", "Fragen beantwortet die KulturLegi Zentralschweiz: Telefon 041 368 52 22, E-Mail zentralschweiz@kulturlegi.ch"));
+  return d;
+}
+
+function render(r) {
+  var box = $("result");
+  box.innerHTML = "";
+  box.hidden = false;
+  box.setAttribute("data-state", r.state === "missing" ? "info" : r.state);
+  if (r.state === "missing") {
+    box.appendChild(el("h2", null, "Es fehlt noch eine Angabe"));
+    box.appendChild(el("p", null, r.text));
+    return;
+  }
+  if (r.kind === "grund") {
+    box.appendChild(el("h2", null, "Sie dürfen die KulturLegi beziehen."));
+    box.appendChild(el("p", null, "Ihr Berechtigungsgrund genügt, Einkommen und Vermögen müssen Sie nicht angeben. Beim Antrag weisen Sie Ihren Bezug nach, zum Beispiel mit der Verfügung oder einer Bestätigung der zuständigen Stelle."));
+  } else if (r.kind === "kinder") {
+    box.appendChild(el("h2", null, "Bitte melden Sie sich bei der KulturLegi"));
+    box.appendChild(el("p", null, "Für Haushalte mit mehr als fünf Kindern nennt das Berechnungsblatt keine Grenze. Die KulturLegi Zentralschweiz klärt Ihren Fall persönlich."));
+  } else if (r.state === "yes") {
+    box.appendChild(el("h2", null, "Sie dürfen die KulturLegi voraussichtlich beziehen."));
+    var ul = el("ul");
+    ul.appendChild(el("li", null, "Ihr Haushaltseinkommen von " + chf(r.einkommen) + " liegt unter der Grenze von " + chf(r.li) + "."));
+    ul.appendChild(el("li", null, "Ihr Vermögen von " + chf(r.vermoegen) + " liegt unter der Grenze von " + chf(r.lv) + "."));
+    box.appendChild(ul);
+    if (r.nahe) box.appendChild(el("p", null, "Ihre Angaben liegen nahe an einer Grenze. Es lohnt sich trotzdem, den Antrag zu stellen, denn die KulturLegi Zentralschweiz prüft ihn genau."));
+    else box.appendChild(el("p", null, "Die KulturLegi Zentralschweiz stützt sich bei der Prüfung auf Ihre letzte Steuerveranlagung."));
+  } else {
+    box.appendChild(el("h2", null, "Nach Ihren Angaben sind Sie voraussichtlich nicht berechtigt."));
+    var ul2 = el("ul");
+    if (!r.okE) ul2.appendChild(el("li", null, "Ihr Haushaltseinkommen von " + chf(r.einkommen) + " liegt über der Grenze von " + chf(r.li) + "."));
+    if (!r.okV) ul2.appendChild(el("li", null, "Ihr Vermögen von " + chf(r.vermoegen) + " liegt über der Grenze von " + chf(r.lv) + "."));
+    box.appendChild(ul2);
+    box.appendChild(el("p", null, "Hat sich Ihr Einkommen oder Ihre Situation seit der letzten Steuerveranlagung verändert, rechnen Sie bitte mit Ihrem aktuellen Jahreseinkommen. Auch dann kann ein Antrag möglich sein, die KulturLegi Zentralschweiz prüft ihn anhand der Steuerverfügung und der aktuellen Lohnabrechnung."));
+  }
+  var zz = ZIFFERN[$("kanton").value];
+  if (zz && r.kind === "rechnung") box.appendChild(el("p", "small", "Diese Zahlen finden Sie in Ihrer Steuerveranlagung: Einkommen unter " + zz.e + ", Vermögen unter " + zz.v + "."));
+  box.appendChild(el("p", "small", "Dieses Ergebnis ist unverbindlich."));
+  box.appendChild(nextSteps());
+}
+
+function readInput() {
+  var g = [];
+  document.querySelectorAll('input[name="grund"]:checked').forEach(function (c) { g.push(c.value); });
+  var k = $("kinder").value;
+  return {
+    gruende: g,
+    haushalt: $("haushalt").value,
+    kinder: k ? parseInt(k, 10) : null,
+    einkommen: parseChf($("einkommen").value),
+    vermoegen: parseChf($("vermoegen").value)
+  };
+}
+
+function update(showResult) {
+  var hh = $("haushalt").value;
+  var kids = hh === "familie" || hh === "allein";
+  $("kinderfeld").hidden = !kids;
+  var z = ZIFFERN[$("kanton").value];
+  $("hint-einkommen").textContent = "Total der Einkünfte der letzten Steuerveranlagung, inklusive Kinderzulagen und Alimente." + (z ? " In Ihrer Steuerveranlagung: " + z.e + "." : "");
+  $("hint-vermoegen").textContent = "Betrag der letzten Steuerveranlagung. Haben Sie kein Vermögen, schreiben Sie 0." + (z ? " In Ihrer Steuerveranlagung: " + z.v + "." : "");
+  if (showResult || submitted) render(check(readInput()));
+}
+
+function fmtField(e) {
+  var n = parseChf(e.target.value);
+  e.target.value = n === null ? "" : n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  var tb = $("limits-body");
+  function row(a, b) { var tr = document.createElement("tr"); [a, b].forEach(function (t) { var td = document.createElement("td"); td.textContent = t; tr.appendChild(td); }); tb.appendChild(tr); }
+  row("Einzelperson", chf(LIMITS.einzel));
+  row("Paar ohne Kinder", chf(LIMITS.paar));
+  [1, 2, 3, 4, 5].forEach(function (n) { row("Paar mit " + n + (n === 1 ? " Kind" : " Kindern"), chf(LIMITS.familie[n])); });
+  [1, 2, 3, 4, 5].forEach(function (n) { row("Alleinerziehend mit " + n + (n === 1 ? " Kind" : " Kindern"), chf(LIMITS.allein[n])); });
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    submitted = true;
+    update(true);
+    $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+  ["haushalt", "kinder", "kanton"].forEach(function (id) { $(id).addEventListener("change", function () { update(false); }); });
+  ["einkommen", "vermoegen"].forEach(function (id) {
+    $(id).addEventListener("input", function () { if (submitted) update(false); });
+    $(id).addEventListener("blur", fmtField);
+  });
+  update(false);
+});
+</script>
+
+</body>
+</html>
